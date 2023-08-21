@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Translator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+    <form action="/translate" method="post" enctype="multipart/form-data" id="upload-form">
+        <div class="file-drop-zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+            Drag & Drop PDF here or
+            <input type="file" name="file" id="file" accept=".pdf" required>
+            <label for="file">Browse</label>
+            <span id="file-name">No file chosen</span>
+        </div>
+
+
+        <div class="language-options">
+            <label>Select Language:</label>
+            {% for lang in languages %}
+            <div>
+                <input type="radio" id="{{ lang }}" name="language" value="{{ lang }}" {% if lang=="English" %} checked
+                    {% endif %} required>
+                <label for="{{ lang }}">{{ lang }}</label>
+            </div>
+            {% endfor %}
+
+        </div>
+
+
+        <input type="submit" value="Translate">
+    </form>
+
+    <pre id="translated-text"></pre>
+
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch('/translate', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            if (result.error) {
+                alert(result.error);
+            } else {
+                document.getElementById('translated-text').textContent = result.text;
+            }
+        });
+
+        document.getElementById('file').addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                document.getElementById('file-name').textContent = this.files[0].name;
+            } else {
+                document.getElementById('file-name').textContent = 'No file chosen';
+            }
+        });
+
+
+
+        function dropHandler(ev) {
+            ev.preventDefault();
+            if (ev.dataTransfer.items) {
+                for (let item of ev.dataTransfer.items) {
+                    if (item.kind === 'file') {
+                        document.getElementById('file').files = ev.dataTransfer.files;
+                        // Check and display the file name
+                        if (document.getElementById('file').files[0]) {
+                            document.getElementById('file-name').textContent = document.getElementById('file').files[0].name;
+                        } else {
+                            document.getElementById('file-name').textContent = 'No file chosen';
+                        }
+                    }
+                }
+            }
+        }
+
+        function dragOverHandler(ev) {
+            ev.preventDefault();
+        }
+
+    </script>
+</body>
+
+</html>
